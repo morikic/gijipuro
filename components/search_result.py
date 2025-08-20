@@ -17,7 +17,7 @@ def filter_results_by_type(results, term, search_type):
 
 
 def show_search_results():
-    st.button("🏠 ホームへ戻る", on_click=lambda: st.session_state.update({"page": "home"}))
+    st.button(" ホームへ戻る", on_click=lambda: st.session_state.update({"page": "home"}))
 
     term = st.session_state.get("search_term", "")
     search_type = st.session_state.get("search_type", "")
@@ -35,7 +35,7 @@ def show_search_results():
 
 
 def sort_results(results, sort_mode="アルファベット", order="昇順"):
-    reverse = order == "降順"
+    reverse = (order == "降順")
 
     def sort_key_alpha(item):
         return item.get("trackName", "").lower()
@@ -44,13 +44,33 @@ def sort_results(results, sort_mode="アルファベット", order="昇順"):
         return locale.strxfrm(item.get("trackName", ""))
 
     if sort_mode == "50音":
-        return sorted(results, key=sort_key_japanese, reverse=reverse)
+        # 曲名の最初の文字で日本語かどうか判定（ひらがな・カタカナ・漢字）
+        def is_japanese_first_char(name: str) -> bool:
+            if not name:
+                return False
+            c = name[0]
+            return (
+                "\u3040" <= c <= "\u309F"  # ひらがな
+                or "\u30A0" <= c <= "\u30FF"  # カタカナ
+                or "\u4E00" <= c <= "\u9FFF"  # 漢字
+            )
+
+        japanese = [r for r in results if is_japanese_first_char(r.get("trackName", ""))]
+        others = [r for r in results if not is_japanese_first_char(r.get("trackName", ""))]
+
+        japanese_sorted = sorted(japanese, key=sort_key_japanese, reverse=reverse)
+        others_sorted = sorted(others, key=sort_key_alpha, reverse=reverse)
+
+        if reverse:
+            return others_sorted + japanese_sorted  # 降順：英数字が先
+        else:
+            return japanese_sorted + others_sorted  # 昇順：日本語が先
     else:
         return sorted(results, key=sort_key_alpha, reverse=reverse)
 
 
 def display_music_list(results):
-    st.subheader("🔍 検索結果")
+    st.subheader(" 検索結果")
 
     if not results:
         st.warning("該当する楽曲が見つかりませんでした。")
@@ -78,7 +98,7 @@ def display_music_list(results):
                 if preview_url:
                     st.audio(preview_url, format="audio/mp4")
 
-                with st.expander("🎵 詳細"):
+                with st.expander(" 詳細"):
                     st.image(item.get("artworkUrl100").replace("100x100", "300x300"), width=150)
                     st.markdown(f"### {item.get('trackName', 'タイトルなし')}")
                     st.markdown(f"**アーティスト**: {item.get('artistName', '不明')}")

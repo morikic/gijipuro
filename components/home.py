@@ -1,7 +1,7 @@
 import streamlit as st
 
 def show_home():
-    st.title("🎵 StreamTunes")
+    st.title(" StreamTunes")
 
     # --- コールバック関数の定義 ---
 
@@ -28,7 +28,7 @@ def show_home():
             index=0 if st.session_state.get("search_type", "曲名") == "曲名" else 1,
             horizontal=True
         )
-        if st.form_submit_button("🔍 検索"):
+        if st.form_submit_button(" 検索"):
             st.session_state.search_type = search_type_from_radio
             if st.session_state.get("search_term"):
                 st.session_state.pop("raw_results", None)       # 🎯【変更①】
@@ -40,7 +40,7 @@ def show_home():
     st.button("❌ クリア", on_click=clear_search)
 
     # --- ジャンルカード ---
-    st.markdown("## 🎼 ジャンルから探す")
+    st.markdown("## ジャンルから探す")
     genres = [
         {"name": "Rock", "term": "rock"}, {"name": "Jazz", "term": "jazz"},
         {"name": "Pop", "term": "pop"}, {"name": "Dance / EDM", "term": "edm"},
