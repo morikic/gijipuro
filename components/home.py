@@ -31,8 +31,8 @@ def show_home():
         if st.form_submit_button(" 検索"):
             st.session_state.search_type = search_type_from_radio
             if st.session_state.get("search_term"):
-                st.session_state.pop("raw_results", None)       # 🎯【変更①】
-                st.session_state.pop("filtered_results", None)  # 🎯【変更①】
+                st.session_state.pop("raw_results", None)
+                st.session_state.pop("filtered_results", None)
                 st.session_state.page = "search"
                 st.rerun()
 

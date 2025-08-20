@@ -13,7 +13,7 @@ def filter_results_by_type(results, term, search_type):
     elif search_type == "アーティスト名":
         return [item for item in results if term_lower in item.get("artistName", "").lower()]
     else:
-        return results  # ジャンル検索などではそのまま表示
+        return results  # ジャンル検索では関係なくそのまま表示
 
 
 def show_search_results():
