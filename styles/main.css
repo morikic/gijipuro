@@ -1,0 +1,30 @@
+/* ヘッダーボタンの余白調整 */
+div[data-testid="stButton"] > button {
+    padding-top: 0px;
+    padding-bottom: 0px;
+}
+
+/* フローティングアクションボタン（FAB）のスタイル */
+.fab {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    width: 64px;
+    height: 64px;
+    background-color: #FF4B4B;
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    cursor: pointer;
+    z-index: 1000;
+    text-decoration: none;
+}
+
+/* FAB内部のテキストのスタイル */
+.fab-text {
+    color: white;
+    font-size: 14px;
+    font-weight: bold;
+}

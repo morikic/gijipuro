@@ -1,4 +1,5 @@
 import streamlit as st
+from config import GENRES # config.pyからGENRESをインポート
 
 def show_home():
     st.title(" StreamTunes")
@@ -11,11 +12,14 @@ def show_home():
         st.session_state.search_type = "曲名"
         st.session_state.pop("raw_results", None)
         st.session_state.pop("filtered_results", None)
+        if "search_term_backup" in st.session_state:
+            del st.session_state.search_term_backup
 
     def set_search_and_navigate(term, search_type="ジャンル"):
         """ジャンルボタン用のコールバック：キーワードとタイプをセットして検索ページへ"""
         st.session_state.search_term = term
         st.session_state.search_type = search_type
+        st.session_state.search_term_backup = term
         st.session_state.pop("raw_results", None)
         st.session_state.pop("filtered_results", None)
         st.session_state.page = "search"
@@ -31,6 +35,7 @@ def show_home():
         if st.form_submit_button(" 検索"):
             st.session_state.search_type = search_type_from_radio
             if st.session_state.get("search_term"):
+                st.session_state.search_term_backup = st.session_state.search_term
                 st.session_state.pop("raw_results", None)
                 st.session_state.pop("filtered_results", None)
                 st.session_state.page = "search"
@@ -41,14 +46,9 @@ def show_home():
 
     # --- ジャンルカード ---
     st.markdown("## ジャンルから探す")
-    genres = [
-        {"name": "Rock", "term": "rock"}, {"name": "Jazz", "term": "jazz"},
-        {"name": "Pop", "term": "pop"}, {"name": "Dance / EDM", "term": "edm"},
-        {"name": "Classical", "term": "classical"}, {"name": "Game Music", "term": "game music"},
-        {"name": "Soundtrack", "term": "soundtrack"}, {"name": "Alternative", "term": "alternative"},
-    ]
+    # genresリストの定義を削除し、インポートしたGENRESを使う
     cols = st.columns(4)
-    for i, genre in enumerate(genres):
+    for i, genre in enumerate(GENRES):
         with cols[i % 4]:
             st.button(
                 genre["name"],

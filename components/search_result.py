@@ -1,9 +1,7 @@
 import streamlit as st
 from utils.api_client import search_music
+from utils.helpers import sort_results
 import locale
-
-locale.setlocale(locale.LC_ALL, 'ja_JP.UTF-8')
-
 
 def clear_filter_keyword():
     """クリアボタン用のコールバック関数"""
@@ -20,55 +18,40 @@ def filter_results_by_type(results, term, search_type):
     else:
         return results
 
-
-def sort_results(results, sort_mode="アルファベット", order="昇順"):
-    # ... (この関数は変更なし) ...
-    reverse = (order == "降順")
-
-    def sort_key_alpha(item):
-        return item.get("trackName", "").lower()
-
-    def sort_key_japanese(item):
-        return locale.strxfrm(item.get("trackName", ""))
-
-    if sort_mode == "50音":
-        def is_japanese_first_char(name: str) -> bool:
-            if not name:
-                return False
-            c = name[0]
-            return (
-                "\u3040" <= c <= "\u309F"
-                or "\u30A0" <= c <= "\u30FF"
-                or "\u4E00" <= c <= "\u9FFF"
-            )
-
-        japanese = [r for r in results if is_japanese_first_char(r.get("trackName", ""))]
-        others = [r for r in results if not is_japanese_first_char(r.get("trackName", ""))]
-
-        japanese_sorted = sorted(japanese, key=sort_key_japanese, reverse=reverse)
-        others_sorted = sorted(others, key=sort_key_alpha, reverse=reverse)
-
-        if reverse:
-            return others_sorted + japanese_sorted
-        else:
-            return japanese_sorted + others_sorted
-    else:
-        return sorted(results, key=sort_key_alpha, reverse=reverse)
-
-
 # --- ここから変更点 ---
 
-def display_music_list(results):
-    # --- デバッグ用コード ---
-    st.info("【デバッグ情報 in display_music_list】")
-    st.json(st.session_state)
-    # ----------------------
+def _display_song_item(item):
+    """楽曲1件分の表示を行う内部ヘルパー関数"""
+    preview_url = item.get("previewUrl")
 
-    # st.session_stateから直接 search_term を取得
-    term = st.session_state.get("search_term", "")
-    st.subheader(f'"{term}" の検索結果')
+    with st.container():
+        cols_item = st.columns([1, 3])
+        with cols_item[0]:
+            st.image(item.get("artworkUrl100"), width=80)
+        with cols_item[1]:
+            st.markdown(f"**{item.get('trackName', 'タイトルなし')}**")
+            st.caption(item.get("artistName", "アーティスト不明"))
+            if preview_url:
+                st.audio(preview_url, format="audio/mp4")
+
+            with st.expander(" 詳細"):
+                st.image(item.get("artworkUrl100").replace("100x100", "300x300"), width=150)
+                st.markdown(f"### {item.get('trackName', 'タイトルなし')}")
+                st.markdown(f"**アーティスト**: {item.get('artistName', '不明')}")
+                st.markdown(f"**アルバム**: {item.get('collectionName', '不明')}")
+                if item.get("trackPrice"):
+                    st.markdown(f"**価格**: ¥{int(item.get('trackPrice'))}")
+                if item.get("trackViewUrl"):
+                    st.markdown(f"[Apple Musicで見る]({item.get('trackViewUrl')})", unsafe_allow_html=True)
+                if preview_url:
+                    st.audio(preview_url, format="audio/mp4")
 
 # --- ここまで変更点 ---
+
+
+def display_music_list(results):
+    term = st.session_state.get("search_term", "")
+    st.subheader(f'"{term}" の検索結果')
 
     st.text_input("結果内をさらに検索（曲名、アーティスト名、アルバム名）",
                   key="filter_keyword",
@@ -106,34 +89,18 @@ def display_music_list(results):
 
     sorted_results = sort_results(display_results, sort_mode, order)
 
+    # --- ここから変更点 ---
+    # ループが非常にシンプルになる
     for item in sorted_results:
-        # ... (このループ部分は変更なし) ...
-        preview_url = item.get("previewUrl")
-
-        with st.container():
-            cols_item = st.columns([1, 3])
-            with cols_item[0]:
-                st.image(item.get("artworkUrl100"), width=80)
-            with cols_item[1]:
-                st.markdown(f"**{item.get('trackName', 'タイトルなし')}**")
-                st.caption(item.get("artistName", "アーティスト不明"))
-                if preview_url:
-                    st.audio(preview_url, format="audio/mp4")
-
-                with st.expander(" 詳細"):
-                    st.image(item.get("artworkUrl100").replace("100x100", "300x300"), width=150)
-                    st.markdown(f"### {item.get('trackName', 'タイトルなし')}")
-                    st.markdown(f"**アーティスト**: {item.get('artistName', '不明')}")
-                    st.markdown(f"**アルバム**: {item.get('collectionName', '不明')}")
-                    if item.get("trackPrice"):
-                        st.markdown(f"**価格**: ¥{int(item.get('trackPrice'))}")
-                    if item.get("trackViewUrl"):
-                        st.markdown(f"[Apple Musicで見る]({item.get('trackViewUrl')})", unsafe_allow_html=True)
-                    if preview_url:
-                        st.audio(preview_url, format="audio/mp4")
+        _display_song_item(item)
+    # --- ここまで変更点 ---
 
 
 def show_search_results():
+    if "search_term" not in st.session_state or not st.session_state.search_term:
+        if "search_term_backup" in st.session_state:
+            st.session_state.search_term = st.session_state.search_term_backup
+
     term = st.session_state.get("search_term", "")
     search_type = st.session_state.get("search_type", "")
 
@@ -146,6 +113,4 @@ def show_search_results():
     else:
         filtered = st.session_state["filtered_results"]
 
-    # --- ここから変更点 ---
-    display_music_list(filtered) # 引数から term を削除
-    # --- ここまで変更点 ---
+    display_music_list(filtered)
