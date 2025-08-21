@@ -1,25 +1,32 @@
-/* ヘッダーボタンの余白調整 */
+/* styles/main.css */
+
+/* --- ヘッダー関連のスタイル --- */
+
+/* ヘッダーのボタンの上下の余白を調整 */
 div[data-testid="stButton"] > button {
     padding-top: 0px;
     padding-bottom: 0px;
 }
 
-/* フローティングアクションボタン（FAB）のスタイル */
+
+/* --- フローティングアクションボタン（FAB）関連のスタイル --- */
+
+/* FAB本体のスタイル */
 .fab {
-    position: fixed;
-    bottom: 30px;
-    right: 30px;
-    width: 64px;
-    height: 64px;
-    background-color: #FF4B4B;
-    border-radius: 16px;
-    display: flex;
+    position: fixed; /* 画面に固定表示 */
+    bottom: 30px;    /* 画面下からの距離 */
+    right: 30px;     /* 画面右からの距離 */
+    width: 64px;     /* ボタンの幅 */
+    height: 64px;    /* ボタンの高さ */
+    background-color: #FF4B4B; /* Streamlitのブランドカラー */
+    border-radius: 16px;       /* 角の丸み */
+    display: flex;             /* 中身を中央揃えにするための設定 */
     align-items: center;
     justify-content: center;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-    cursor: pointer;
-    z-index: 1000;
-    text-decoration: none;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2); /* 影を付けて立体感を出す */
+    cursor: pointer;           /* マウスカーソルをポインターに */
+    z-index: 1000;             /* 他の要素より手前に表示 */
+    text-decoration: none;     /* リンクの下線を消す */
 }
 
 /* FAB内部のテキストのスタイル */
