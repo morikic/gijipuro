@@ -1,10 +1,5 @@
 # app.py
 
-"""
-アプリケーションのエントリーポイント。
-ページ遷移の制御（ルーティング）や、全体共通のUI要素の管理を行う。
-"""
-
 import streamlit as st
 from components.home import show_home
 from components.search_result import show_search_results
@@ -45,19 +40,14 @@ def show_fab():
 def main():
     """
     アプリケーションのメイン関数。
-    起動時に一度だけ実行され、ページの状態に応じて表示を切り替える。
     """
-    # 外部CSSファイルを読み込み
     load_css("styles/main.css")
 
-    # セッションにページ情報がなければ、初期ページを'home'に設定
     if "page" not in st.session_state:
         st.session_state.page = "home"
 
-    # 全ページ共通のヘッダーを表示
     show_header()
 
-    # --- ページルーティング ---
     page = st.session_state.page
     if page == "home":
         show_home()
@@ -69,5 +59,4 @@ def main():
 
 
 if __name__ == "__main__":
-    # スクリプトが直接実行された場合にmain関数を呼び出す
     main()

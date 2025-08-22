@@ -29,7 +29,7 @@ def filter_results_by_type(results, term, search_type):
         return [item for item in results if term_lower in item.get("trackName", "").lower()]
     elif search_type == "アーティスト名":
         return [item for item in results if term_lower in item.get("artistName", "").lower()]
-    else:
+    else:  # ジャンル検索の場合は何もしない
         return results
 
 
@@ -92,12 +92,7 @@ def _display_song_item(item, music_videos):
 
 def display_music_list(results, music_videos):
     """
-    楽曲リスト全体のUI（見出し、検索、並び替え、リスト本体）を構築・表示する純粋な「ビュー」関数。
-    受け取ったデータを元に、画面を描画することに専念する。
-
-    Args:
-        results (list): 表示対象の楽曲リスト。
-        music_videos (list): 検索結果に含まれる全MVのリスト。
+    楽曲リスト全体のUIを構築・表示する純粋な「ビュー」関数。
     """
     term = st.session_state.get("search_term", "")
     st.subheader(f'"{term}" の検索結果')
@@ -140,17 +135,15 @@ def display_music_list(results, music_videos):
 
     # --- UI: 楽曲リストのループ表示 ---
     for item in sorted_results:
-        # 各楽曲の描画はヘルパー関数に委譲
         _display_song_item(item, music_videos)
 
 
 def show_search_results():
     """
     検索結果ページのメイン関数（コントローラー）。
-    データの取得・加工・セッションへの保存といった「ロジック」を担当し、
-    最終的に`display_music_list`にデータを渡して表示を依頼する。
+    データの取得・加工・セッションへの保存といった「ロジック」を担当する。
     """
-    # ロジック1: `search_term`が消えるバグの対策
+    # ロジック1: `search_term`が消えるバグへの対策
     if "search_term" not in st.session_state or not st.session_state.search_term:
         if "search_term_backup" in st.session_state:
             st.session_state.search_term = st.session_state.search_term_backup
@@ -158,24 +151,23 @@ def show_search_results():
     term = st.session_state.get("search_term", "")
     search_type = st.session_state.get("search_type", "")
 
-    # ロジック2: 初回検索時のみAPIを叩く
+    # ロジック2: 初回検索時のみAPIを叩き、データ整形を行う
     if "filtered_results" not in st.session_state:
         with st.spinner(f'"{term}" を検索中...'):
-            # ロジック2-A: 検索タイプによってAPIの叩き方を変える
-            if search_type == "ジャンル":
-                # ジャンル検索の場合：①曲検索 → ②MV並列検索
-                song_results = search_music(term, entity="song")
-                filtered_songs = filter_results_by_type(song_results, term, search_type)
-                st.spinner("関連するミュージックビデオを確認中...")
-                all_music_videos = search_mvs_for_songs_concurrently(filtered_songs)
-            else:
-                # キーワード検索の場合：曲とMVを一度に検索
-                raw_results = search_music(term, entity="song,musicVideo")
-                filtered_songs = [item for item in raw_results if item.get("kind") == "song"]
-                all_music_videos = [item for item in raw_results if item.get("kind") == "music-video"]
-                filtered_songs = filter_results_by_type(filtered_songs, term, search_type)
+            # --- 統一データ取得フロー ---
+            # どんな検索タイプでも、この3ステップでデータを取得する
 
-        # 取得・加工したデータをセッションに保存
+            # ステップ1: まず「曲」だけを検索し、関連性の高い楽曲リストを取得
+            song_results = search_music(term, entity="song")
+
+            # ステップ2: 検索精度を上げるため、検索タイプに応じて厳密に絞り込み
+            filtered_songs = filter_results_by_type(song_results, term, search_type)
+
+            # ステップ3: 絞り込まれた綺麗な曲リストを元に、MVを一括並列検索
+            st.spinner("関連するミュージックビデオを確認中...")
+            all_music_videos = search_mvs_for_songs_concurrently(filtered_songs)
+
+        # 取得・加工した最終的なデータをセッションに保存
         st.session_state["filtered_results"] = filtered_songs
         st.session_state["music_videos"] = all_music_videos
 
