@@ -2,10 +2,20 @@
 
 /* --- ヘッダー関連のスタイル --- */
 
-/* ヘッダーのボタンの上下の余白を調整 */
-div[data-testid="stButton"] > button {
-    padding-top: 0px;
-    padding-bottom: 0px;
+/* 以前の指定があればすべて削除し、以下を記述します */
+.page-title {
+    font-size: 38px;
+    font-weight: bold;
+    color: #FF4B4B !important; /* Streamlitのブランドカラー（ピンク）を指定 */
+    text-decoration: none;
+    display: inline-block;
+    padding: 0.5rem 0;
+    transition: color 0.2s; /* 色の変化を滑らかにするアニメーション */
+}
+
+.page-title:hover {
+    color: #E64444 !important; /* 少し濃いピンクを指定 */
+    text-decoration: none;
 }
 
 
@@ -34,4 +44,33 @@ div[data-testid="stButton"] > button {
     color: white;
     font-size: 14px;
     font-weight: bold;
+}
+
+/* --- ジャンルカード関連のスタイル --- */
+.genre-card {
+    display: block;
+    height: 120px; /* カードの高さ */
+    border-radius: 8px; /* 角の丸み */
+    margin-bottom: 1rem;
+    text-decoration: none;
+    position: relative; /* 中の文字を配置する基準点にする */
+    background-size: cover; /* 背景画像をいい感じに表示 */
+    background-position: center;
+    transition: transform 0.2s, box-shadow 0.2s; /* ホバー時のアニメーション */
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+}
+
+.genre-card:hover {
+    transform: scale(1.05); /* 少しだけ拡大 */
+    box-shadow: 0 8px 16px rgba(0,0,0,0.3);
+}
+
+.genre-card-name {
+    color: white;
+    font-weight: bold;
+    font-size: 1.1rem;
+    position: absolute; /* カードの左下に配置 */
+    bottom: 10px;
+    left: 15px;
+    right: 15px; /* 右側にも余白 */
 }
