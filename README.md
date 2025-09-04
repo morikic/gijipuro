@@ -22,31 +22,6 @@
 #### 2.1. プロジェクトファイルの準備
 提供された全てのファイル (`app.py`, `config.py`, `main.css`, `components/`, `utils/`) を、元のディレクトリ構造を維持したままローカルマシン上に配置してください。
 
-
-## 推奨ディレクトリ構成（プロジェクトルート）
-
-├── app.py
-
-├── config.py
-
-├── styles/
-
-│   └── main.css
-
-├── components/
-
-│   ├── common.py
-
-│   ├── home.py
-
-│   └── search_result.py
-
-└── utils/
-
-├── api_client.py
-
-└── helpers.py
-
 ### 2.2. Python仮想環境の構築(推奨)
 
 プロジェクトの依存関係を管理するため、仮想環境を構築します。ターミナル（またはコマンドプロンプト）で以下のコマンドを実行してください。
@@ -59,11 +34,11 @@ python -m venv venv
 
 ### 仮想環境を有効化
 
-### Windowsの場合
-venv\Scripts\activate
+- ### Windowsの場合
+  venv\Scripts\activate
 
-### macOS / Linuxの場合
-source venv/bin/activate
+- ### macOS / Linuxの場合
+  source venv/bin/activate
 
 確認: コマンド実行後、ターミナルのプロンプトの先頭に (venv) と表示されれば、仮想環境は正常に有効化されています。
 
