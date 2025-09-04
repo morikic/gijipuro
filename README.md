@@ -81,7 +81,6 @@ streamlit run app.py
 
 実行結果の表示例:
 
-Plaintext
 
   You can now view your Streamlit app in your browser.
 
