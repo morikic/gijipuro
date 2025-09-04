@@ -1,74 +1,76 @@
 # components/search_result.py
 
-"""
-検索結果ページのUIコンポーネントを定義するモジュール。
-APIからのデータ取得のトリガー、および結果の表示、絞り込み、並び替え機能を持つ。
+"""このファイルは、検索結果画面のUIとロジックを定義する。
+APIから取得した楽曲リストを表示し、絞り込み、ソート、
+詳細表示、関連MVのオンデマンド検索などの機能を提供する。
 """
 
+
+# --- モジュールのインポート ---
 import streamlit as st
-from utils.api_client import search_music, search_mvs_for_songs_concurrently
-from utils.helpers import sort_results
+from utils.api_client import search_music, search_mv_for_term  # API通信用の関数
+from utils.helpers import sort_results  # ソート処理用のヘルパー関数
 
 
-# --- このモジュールで使われるコールバック関数 ---
-
-def clear_filter_keyword():
-    """結果内検索のクリアボタン用コールバック関数。セッション内のキーワードを空にする。"""
-    st.session_state.filter_keyword = ""
-
-
-# --- このモジュールで使われるデータ処理関数 ---
-
+# --- 検索結果をフィルタリングする関数 ---
 def filter_results_by_type(results, term, search_type):
     """
-    APIから取得した結果を、検索タイプに応じてクライアント側でさらに絞り込む関数。
-    （例：「曲名」で検索した場合、曲名にキーワードが含まれるものだけを残す）
+    目的: APIから取得した全結果の中から、検索タイプ（曲名 or アーティスト名）に合致するものだけを抽出する。
+    役割: 検索の精度を高める。例えば「Apple」でアーティスト検索した際に、
+         曲名に「Apple」が含まれる曲が結果から除外される。
     """
-    term_lower = term.lower()
+    term_lower = term.lower()  # 検索キーワードを小文字に変換（大文字・小文字を区別しないため）
     if search_type == "曲名":
         return [item for item in results if term_lower in item.get("trackName", "").lower()]
     elif search_type == "アーティスト名":
         return [item for item in results if term_lower in item.get("artistName", "").lower()]
-    else:  # ジャンル検索の場合は何もしない
+    else:
+        # ジャンル検索などの場合はフィルタリングせず、全ての結果を返す。
         return results
 
 
-# --- このモジュールで使われるUI表示関数 ---
-
-def _display_song_item(item, music_videos):
+# --- 個々の楽曲アイテムを表示するための内部関数 ---
+def _display_song_item(item):
     """
-    楽曲1件分のUIを構築・表示する内部ヘルパー関数。
-    Args:
-        item (dict): 楽曲1件分のデータ。
-        music_videos (list): 事前に取得した全MVのリスト。この中から関連MVを探す。
+    目的: 検索結果リストの中の一つの楽曲アイテムを描画する。
+    役割: 曲名、アーティスト名、アートワーク、再生ボタン、詳細情報（Expander内）を表示する。
+         詳細情報が開かれたタイミングで、関連MVを検索・表示する。
     """
-    preview_url = item.get("previewUrl")
+    # 楽曲情報がない場合に備え、.get()で安全に値を取得する。
     track_name = item.get('trackName', 'タイトルなし')
     artist_name = item.get('artistName', 'アーティスト不明')
+    preview_url = item.get("previewUrl")
 
-    # 事前に一括取得したMVリストから、この曲に合致するMVを探す
-    matching_mv = next((
-        mv for mv in music_videos
-        if mv.get("trackName", "").lower() == track_name.lower() and \
-           mv.get("artistName", "").lower() == artist_name.lower()
-    ), None)
+    def handle_play_button():
+        """「再生」ボタンが押された時の処理をまとめた関数"""
+        st.session_state.now_playing = item  # 現在再生中の曲としてセッションに保存
+        st.session_state.autoplay = True  # 音楽コントローラーで自動再生をトリガーするフラグ
 
+    # st.container()で、この楽曲アイテムに関連するUI要素をグループ化する。
     with st.container():
-        cols_item = st.columns([1, 3])
+        # [アートワーク, 曲情報, 再生ボタン] の3列レイアウトを作成
+        cols_item = st.columns([1, 4, 1])
         with cols_item[0]:
             st.image(item.get("artworkUrl100"), width=80)
         with cols_item[1]:
-            # MVが見つかった場合は、タイトルの前にアイコンを表示
-            if matching_mv:
-                st.markdown(f"**🎬 {track_name}**")
-            else:
-                st.markdown(f"**{track_name}**")
+            st.markdown(f"**{track_name}**")
             st.caption(artist_name)
+        with cols_item[2]:
+            # プレビューURLがある場合のみ再生ボタンを表示する。
             if preview_url:
-                st.audio(preview_url, format="audio/mp4")
+                st.button("再生️", key=f"play_{item['trackId']}", on_click=handle_play_button)
 
-            with st.expander(" 詳細"):
+        # st.expander()で、クリックすると開閉する詳細情報セクションを作成する。
+        with st.expander(" 詳細"):
+            col1, col2 = st.columns([1, 2])
+            with col1:
+                # より高解像度のアートワークを表示
                 st.image(item.get("artworkUrl100").replace("100x100", "300x300"), width=150)
+                if preview_url:
+                    st.button("再生", key=f"play_{item['trackId']}_detail", on_click=handle_play_button,
+                              use_container_width=True)
+            with col2:
+                # 楽曲のテキスト情報を表示
                 st.markdown(f"### {track_name}")
                 st.markdown(f"**アーティスト**: {artist_name}")
                 st.markdown(f"**アルバム**: {item.get('collectionName', '不明')}")
@@ -76,40 +78,48 @@ def _display_song_item(item, music_videos):
                     st.markdown(f"**価格**: ¥{int(item.get('trackPrice'))}")
                 if item.get("trackViewUrl"):
                     st.markdown(f"[Apple Musicで見る]({item.get('trackViewUrl')})", unsafe_allow_html=True)
-                if preview_url:
-                    st.audio(preview_url, format="audio/mp4")
-                st.divider()
-                st.markdown("#### ミュージックビデオ")
-                if matching_mv:
-                    mv_preview_url = matching_mv.get("previewUrl")
-                    if mv_preview_url:
-                        st.video(mv_preview_url)
-                    else:
-                        st.caption("プレビュー可能なミュージックビデオはありません。")
+
+            # --- MVのオンデマンド取得と表示 ---
+            st.divider()
+            st.markdown("#### ミュージックビデオ")
+            # 各楽曲ごとにMVデータをセッションに保存するためのユニークなキーを定義
+            mv_key = f"mv_data_{item['trackId']}"
+            # セッションにMVデータがまだ保存されていない場合（＝初めてExpanderが開かれた時）
+            if mv_key not in st.session_state:
+                with st.spinner("ミュージックビデオを検索中..."):
+                    # 曲名とアーティスト名を組み合わせて、より精度の高い検索キーワードを作成
+                    mv_term = f"{track_name} {artist_name}"
+                    matching_mv = search_mv_for_term(mv_term)
+                    # 検索結果（見つからなかった場合はNone）をセッションに保存
+                    st.session_state[mv_key] = matching_mv
+            else:
+                # 既にデータがあれば、API検索は行わずセッションから読み込む。
+                matching_mv = st.session_state[mv_key]
+
+            # MVが見つかった場合
+            if matching_mv:
+                mv_preview_url = matching_mv.get("previewUrl")
+                if mv_preview_url:
+                    st.video(mv_preview_url)  # ビデオプレーヤーで表示
                 else:
-                    st.caption("ミュージックビデオは見つかりませんでした。")
+                    st.caption("プレビュー可能なミュージックビデオはありません。")
+            else:
+                st.caption("ミュージックビデオは見つかりませんでした。")
 
 
-def display_music_list(results, music_videos):
+# --- 楽曲リスト全体を表示する関数 ---
+def display_music_list(results):
     """
-    楽曲リスト全体のUIを構築・表示する純粋な「ビュー」関数。
+    目的: フィルタリングおよびソート済みの楽曲リストを画面に描画する。
+    役割: 検索結果のヘッダー（タイトル）、絞り込み、ソートオプションを表示し、
+         リスト内の各楽曲を _display_song_item を使ってループ表示する。
     """
-    term = st.session_state.get("search_term", "")
+    term = st.session_state.get("search_term_backup", "")
     st.subheader(f'"{term}" の検索結果')
 
-    # --- UI: 結果内検索 ---
-    st.text_input("結果内をさらに検索（曲名、アーティスト名、アルバム名）", key="filter_keyword",
-                  placeholder="キーワードを入力...")
-    cols = st.columns([1, 1, 5])
-    with cols[0]:
-        st.button("検索")
-    if st.session_state.get("filter_keyword"):
-        with cols[1]:
-            st.button("クリア", on_click=clear_filter_keyword)
-
-    # --- データ処理: 結果内検索のキーワードでさらに絞り込み ---
+    # サイドバーの絞り込みキーワードで、表示する楽曲をさらにフィルタリングする。
     songs_to_display = results
-    filter_keyword_from_state = st.session_state.get("filter_keyword", "")
+    filter_keyword_from_state = st.session_state.get("filter_keyword_sidebar", "")
     if filter_keyword_from_state:
         keyword_lower = filter_keyword_from_state.lower()
         songs_to_display = [
@@ -119,61 +129,50 @@ def display_music_list(results, music_videos):
                keyword_lower in item.get("collectionName", "").lower()
         ]
 
+    # 絞り込みの結果、表示する曲がなくなった場合のメッセージ
     if not songs_to_display:
         st.warning("該当する楽曲が見つかりませんでした。")
         return
 
-    # --- UI: 並び替え ---
+    # ソート順を選択するためのラジオボタンを設置
     col1, col2 = st.columns([1.3, 1])
     with col1:
         sort_mode = st.radio("並び順タイプ", ["アルファベット", "50音"], horizontal=True)
     with col2:
         order = st.radio("順序", ["昇順", "降順"], horizontal=True)
 
-    # --- データ処理: ソート ---
+    # 選択されたオプションに基づいて、ヘルパー関数でリストをソートする。
     sorted_results = sort_results(songs_to_display, sort_mode, order)
 
-    # --- UI: 楽曲リストのループ表示 ---
+    # ソートされたリストをループ処理し、各楽曲を表示する。
     for item in sorted_results:
-        _display_song_item(item, music_videos)
+        _display_song_item(item)
 
 
+# --- 検索結果ページ全体の表示を管理するメイン関数 ---
 def show_search_results():
     """
-    検索結果ページのメイン関数（コントローラー）。
-    データの取得・加工・セッションへの保存といった「ロジック」を担当する。
+    目的: 検索結果ページの表示フロー全体を制御する。
+    役割: セッションの状態を確認し、必要であればAPIからデータを取得・フィルタリングしてセッションに保存する。
+         その後、display_music_listを呼び出して画面に結果を描画する。
     """
-    # ロジック1: `search_term`が消えるバグへの対策
-    if "search_term" not in st.session_state or not st.session_state.search_term:
-        if "search_term_backup" in st.session_state:
-            st.session_state.search_term = st.session_state.search_term_backup
+    # ページ内アンカー。FAB（TOPへボタン）の飛び先として機能する。
+    st.markdown('<a id="top"></a>', unsafe_allow_html=True)
 
-    term = st.session_state.get("search_term", "")
+    term = st.session_state.get("search_term_backup", "")
     search_type = st.session_state.get("search_type", "")
 
-    # ロジック2: 初回検索時のみAPIを叩き、データ整形を行う
+    # セッションにフィルタリング済みの検索結果が保存されていない場合（＝新しい検索が実行された直後）
     if "filtered_results" not in st.session_state:
         with st.spinner(f'"{term}" を検索中...'):
-            # --- 統一データ取得フロー ---
-            # どんな検索タイプでも、この3ステップでデータを取得する
-
-            # ステップ1: まず「曲」だけを検索し、関連性の高い楽曲リストを取得
+            # APIを叩いて楽曲を検索する。
             song_results = search_music(term, entity="song")
-
-            # ステップ2: 検索精度を上げるため、検索タイプに応じて厳密に絞り込み
+            # 検索タイプに応じて結果をフィルタリングする。
             filtered_songs = filter_results_by_type(song_results, term, search_type)
+            # 処理後の結果をセッションに保存する。これにより、ソート順変更などの再描画時にAPI検索が再実行されるのを防ぐ。
+            st.session_state["filtered_results"] = filtered_songs
 
-            # ステップ3: 絞り込まれた綺麗な曲リストを元に、MVを一括並列検索
-            st.spinner("関連するミュージックビデオを確認中...")
-            all_music_videos = search_mvs_for_songs_concurrently(filtered_songs)
-
-        # 取得・加工した最終的なデータをセッションに保存
-        st.session_state["filtered_results"] = filtered_songs
-        st.session_state["music_videos"] = all_music_videos
-
-    # 画面描画の準備：セッションから表示に必要なデータを取得
+    # セッションから表示すべき楽曲リストを取得する。
     filtered = st.session_state.get("filtered_results", [])
-    music_videos = st.session_state.get("music_videos", [])
-
-    # 描画関数にデータを渡して、画面表示を依頼
-    display_music_list(filtered, music_videos)
+    # 楽曲リスト表示関数を呼び出す。
+    display_music_list(filtered)

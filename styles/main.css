@@ -1,45 +1,51 @@
 /* styles/main.css */
 
+/* Streamlitのデフォルトスタイルを上書きするための基本設定 */
+html, body, [data-testid="stAppViewContainer"], [data-testid="stVerticalBlock"] {
+    height: 100% !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
 /* --- ヘッダー関連のスタイル --- */
-
-/* 以前の指定があればすべて削除し、以下を記述します */
-.page-title {
-    font-size: 38px;
+/* サイドバー内のアプリタイトル (`<a class="page-title">`) に適用されるスタイル */
+[data-testid="stSidebar"] .page-title {
+    font-size: 32px;
     font-weight: bold;
-    color: #FF4B4B !important; /* Streamlitのブランドカラー（ピンク）を指定 */
-    text-decoration: none;
-    display: inline-block;
+    color: #FF4B4B !important; /* Streamlitのデフォルト色を上書きするため!importantを指定 */
+    text-decoration: none; /* 下線を消す */
+    display: block; /* ブロック要素にして、paddingやmarginを有効にする */
     padding: 0.5rem 0;
-    transition: color 0.2s; /* 色の変化を滑らかにするアニメーション */
+    transition: color 0.2s; /* ホバー時の色の変化を滑らかにする */
+    text-align: center;
+    margin-bottom: 2rem;
 }
-
-.page-title:hover {
-    color: #E64444 !important; /* 少し濃いピンクを指定 */
+/* タイトルにマウスカーソルを乗せた時のスタイル */
+[data-testid="stSidebar"] .page-title:hover {
+    color: #E64444 !important;
     text-decoration: none;
 }
 
-
-/* --- フローティングアクションボタン（FAB）関連のスタイル --- */
-
-/* FAB本体のスタイル */
+/* --- FAB関連のスタイル --- */
+/* フローティングアクションボタン (`<a class="fab">`) のスタイル */
 .fab {
-    position: fixed; /* 画面に固定表示 */
-    bottom: 30px;    /* 画面下からの距離 */
-    right: 30px;     /* 画面右からの距離 */
-    width: 64px;     /* ボタンの幅 */
-    height: 64px;    /* ボタンの高さ */
-    background-color: #FF4B4B; /* Streamlitのブランドカラー */
-    border-radius: 16px;       /* 角の丸み */
-    display: flex;             /* 中身を中央揃えにするための設定 */
-    align-items: center;
-    justify-content: center;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.2); /* 影を付けて立体感を出す */
-    cursor: pointer;           /* マウスカーソルをポインターに */
-    z-index: 1000;             /* 他の要素より手前に表示 */
-    text-decoration: none;     /* リンクの下線を消す */
+    position: fixed; /* 画面上の固定位置に表示 */
+    bottom: 30px; /* 画面下から30px */
+    right: 30px; /* 画面右から30px */
+    width: 64px;
+    height: 64px;
+    background-color: #FF4B4B;
+    border-radius: 16px; /* 角を丸くする */
+    display: flex; /* Flexboxを使って中のテキストを中央揃えにする */
+    align-items: center; /* 垂直方向の中央揃え */
+    justify-content: center; /* 水平方向の中央揃え */
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2); /* 影をつけて立体感を出す */
+    cursor: pointer; /* カーソルをポインターにする */
+    z-index: 1000; /* 他の要素より手前に表示 */
+    text-decoration: none !important; /* 下線を消す */
 }
-
-/* FAB内部のテキストのスタイル */
+/* FABの中のテキスト (`<span class="fab-text">`) のスタイル */
 .fab-text {
     color: white;
     font-size: 14px;
@@ -47,30 +53,47 @@
 }
 
 /* --- ジャンルカード関連のスタイル --- */
+/* ホーム画面のジャンルカード (`<a class="genre-card">`) のスタイル */
 .genre-card {
     display: block;
-    height: 120px; /* カードの高さ */
-    border-radius: 8px; /* 角の丸み */
+    height: 120px;
+    border-radius: 8px;
     margin-bottom: 1rem;
     text-decoration: none;
-    position: relative; /* 中の文字を配置する基準点にする */
-    background-size: cover; /* 背景画像をいい感じに表示 */
-    background-position: center;
-    transition: transform 0.2s, box-shadow 0.2s; /* ホバー時のアニメーション */
+    position: relative; /* 中のテキストを絶対位置で指定するための基準 */
+    background-size: cover; /* 背景画像をカード全体に表示 */
+    background-position: center; /* 背景画像を中央に配置 */
+    transition: transform 0.2s, box-shadow 0.2s; /* ホバー時のアニメーション効果 */
     box-shadow: 0 4px 8px rgba(0,0,0,0.2);
 }
-
+/* カードにマウスカーソルを乗せた時のスタイル */
 .genre-card:hover {
-    transform: scale(1.05); /* 少しだけ拡大 */
-    box-shadow: 0 8px 16px rgba(0,0,0,0.3);
+    transform: scale(1.05); /* 少し拡大する */
+    box-shadow: 0 8px 16px rgba(0,0,0,0.3); /* 影を濃くする */
 }
-
+/* カードの中のジャンル名 (`<p class="genre-card-name">`) のスタイル */
 .genre-card-name {
     color: white;
     font-weight: bold;
     font-size: 1.1rem;
-    position: absolute; /* カードの左下に配置 */
-    bottom: 10px;
-    left: 15px;
-    right: 15px; /* 右側にも余白 */
+    position: absolute; /* 親要素(.genre-card)を基準に位置を指定 */
+    bottom: 10px; /* 下から10px */
+    left: 15px; /* 左から15px */
+    right: 15px;
+}
+
+/* --- アルバムカルーセル内のApple Musicリンクのスタイル --- */
+.apple-music-link {
+    display: inline-block;
+    margin-top: 8px;
+    padding: 6px 12px;
+    color: #f5f5f7;
+    border-radius: 5px;
+    text-decoration: none;
+    font-size: 0.9rem;
+    transition: background-color 0.2s;
+}
+.apple-music-link:hover {
+    background-color: #555;
+    color: white;
 }
